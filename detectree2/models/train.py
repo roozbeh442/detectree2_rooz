@@ -554,7 +554,8 @@ def get_tree_dicts(directory: str, class_mapping: Optional[Dict[str, int]] = Non
             img_anns = json.load(f)
 
         record: Dict[str, Any] = {}
-        filename = img_anns["imagePath"]
+        # filename = img_anns["imagePath"]
+        filename = '/'+str(Path(*directory.split('/')[:-2])) + '/'+img_anns["imagePath"].split('/')[-1]
 
         # Make sure we have the correct height and width
         # If image path ends in .png use cv2 to get height and width else if image path ends in .tif use rasterio
