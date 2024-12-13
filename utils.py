@@ -54,23 +54,27 @@ class Read_S3_Data():
         self.folder_prefix = folder_prefix
         self.session = boto3.Session(profile_name='default')
         self.s3 = self.session.client('s3')
+        
     def list_content(self) -> list: 
-        self.list_response = self.s3.list_objects_v2(Bucket=self.bucket_name, Prefix=self.folder_prefix)
-        self.file_list = [cont['Key'] for cont in self.list_response['Contents']]
+        paginator = self.s3.get_paginator('list_objects_v2') # the paginator is required becasue by default the 'list_objects_v2' returns first 1000 files only.
+        pages = paginator.paginate(Bucket=self.bucket_name, Prefix=self.folder_prefix)
+        self.file_list = [obj['Key'] for page in pages for obj in page['Contents']]
         return self.file_list
     
     def list_by_ftype(self, ftype: str) -> list:
-        """_summary_
-
+        """return all the files with a specific type recursively under a folder_prefix
         Args:
-            ftype (str): _description_
+            ftype (str): input string without the '.'
 
         Returns:
-            list: _description_
+            list: list of all the availabel files of the above type in the folder prefix
         """
-        self.list_response = self.s3.list_objects_v2(Bucket=self.bucket_name, Prefix=self.folder_prefix)
-        self.ftype_list = [cont['Key'] for cont in self.list_response['Contents'] if cont['Key'].split('.')[-1] == ftype]
+        paginator = self.s3.get_paginator('list_objects_v2') # the paginator is required becasue by default the 'list_objects_v2' returns first 1000 files only.
+        pages = paginator.paginate(Bucket=self.bucket_name, Prefix=self.folder_prefix)
+        self.ftype_list = [obj['Key'] for page in pages for obj in page['Contents'] if obj['Key'].split('.')[-1] == ftype]  # this is a nested for loop, try and find a faster way of implementing it.
+        
         return self.ftype_list
+    
     def get_file_binary(self, fname: str):
         """This function takes in the S3 bucket key of a file and returns the file in buffer format.
 
